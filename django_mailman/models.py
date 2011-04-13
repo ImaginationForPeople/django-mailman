@@ -18,6 +18,7 @@ SUBSCRIBE_MSG = (
 UNSUBSCRIBE_MSG = (
     u'Erfolgreich beendete Abonnements', # de
     u'Successfully Removed', # en
+    u'Successfully Unsubscribed', # also en
 )
 
 # Mailman-Messages for a failed remove from a list
