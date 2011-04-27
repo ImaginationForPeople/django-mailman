@@ -193,7 +193,7 @@ class List(models.Model):
         (letters, members) = self.__parse_member_content(content, self.encoding)
         all_members.extend(members)
         for letter in letters[1:]:
-            content = opener.open(url, data).read()
+            content = opener.open(url + letter, data).read()
             (letters, members) = self.__parse_member_content(content, self.encoding)
             all_members.extend(members)
         all_members.sort()
