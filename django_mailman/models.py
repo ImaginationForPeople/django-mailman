@@ -132,9 +132,9 @@ class List(models.Model):
     def __parse_member_content(self, content, encoding='iso-8859-1'):
         if not content:
             raise Exception('No valid Content!')
-
         members = []
-        letters = re.findall('\?letter=[a-z]', content)
+        letters = re.findall('letter=\w{1}', content)
+        chunks = re.findall('chunk=\d+', content)
         input = re.findall('name=".+_realname" type="TEXT" value=".*" size="[0-9]+" >', content)
         for member in input:
             info = member.split('" ')
@@ -143,7 +143,8 @@ class List(models.Model):
             email = unicode(email, encoding)
             realname = unicode(realname, encoding)
             members.append([realname, email])
-        return (letters, members)
+        letters = set(letters)
+        return (letters, members, chunks)
 
     def get_admin_moderation_url(self):
         return '%s/admindb/%s/?adminpw=%s' % (self.main_url, self.name,
@@ -190,11 +191,17 @@ class List(models.Model):
 
         all_members = []
         content = opener.open(url, data).read()
-        (letters, members) = self.__parse_member_content(content, self.encoding)
-        all_members.extend(members)
-        for letter in letters[1:]:
-            content = opener.open(url + letter, data).read()
-            (letters, members) = self.__parse_member_content(content, self.encoding)
+        (letters, members, chunks) = self.__parse_member_content(content, self.encoding)
+        for letter in letters:
+            url_letter = u"%s?%s" %(url, letter)
+            content = opener.open(url_letter, data).read()
+            (letters, members, chunks) = self.__parse_member_content(content, self.encoding)
             all_members.extend(members)
+            for chunk in chunks[1:]:
+                url_letter_chunk = "%s?%s&%s" %(url, letter, chunk)
+                content = opener.open(url_letter_chunk, data).read()
+                (letters, members, chunks) = self.__parse_member_content(content, self.encoding)
+                all_members.extend(members)
+                
         all_members.sort()
         return all_members
