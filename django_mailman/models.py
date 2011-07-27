@@ -12,6 +12,7 @@ from webcall import MultipartPostHandler
 SUBSCRIBE_MSG = (
     u'Erfolgreich eingetragen', # de
     u'Successfully subscribed', # en
+    u'Abonnement r\xe9ussi', # fr
 )
 
 # Mailman-Messages for successfully remove from a list
@@ -19,13 +20,20 @@ UNSUBSCRIBE_MSG = (
     u'Erfolgreich beendete Abonnements', # de
     u'Successfully Removed', # en
     u'Successfully Unsubscribed', # also en
+    u'R\xe9siliation r\xe9ussie', # fr
 )
 
 # Mailman-Messages for a failed remove from a list
 NON_MEMBER_MSG = (
     u'Nichtmitglieder können nicht aus der Mailingliste ausgetragen werden', # de
     u'Cannot unsubscribe non-members', # en
+    u"Ne peut r\xe9silier l'abonnement de non-abonn\xe9s ", # fr
 )
+
+# To control user form unsubscription
+UNSUBSCRIBE_BUTTON = {
+    'fr' : 'Résilier',
+}
 
 # Definition from the Mailman-Source ../Mailman/Default.py
 LANGUAGES = (
@@ -127,7 +135,9 @@ class List(models.Model):
         else:
             raise Exception('Could not find member-information')
 
-        return (unicode(msg), unicode(member))
+        msg = msg.decode(self.encoding)
+        member = member.decode(self.encoding)
+        return (msg, member)
 
     def __parse_member_content(self, content, encoding='iso-8859-1'):
         if not content:
@@ -205,3 +215,61 @@ class List(models.Model):
                 
         all_members.sort()
         return all_members
+
+    def user_subscribe(self, email, password, language='fr', first_name=u'', last_name=u''):
+
+        url = '%s/subscribe/%s' % (self.main_url, self.name)
+
+        password = check_encoding(password, self.encoding)
+        email = check_encoding(email, self.encoding)
+        first_name = check_encoding(first_name, self.encoding)
+        last_name = check_encoding(last_name, self.encoding)
+        name = '%s %s' % (first_name, last_name)
+
+        SUBSCRIBE_DATA['email'] = email
+        SUBSCRIBE_DATA['pw'] = password
+        SUBSCRIBE_DATA['pw-conf'] = password
+        SUBSCRIBE_DATA['fullname'] = name
+        SUBSCRIBE_DATA['language'] = language
+        opener = urllib2.build_opener(MultipartPostHandler(self.encoding, True))
+        request = opener.open(url, SUBSCRIBE_DATA)
+        content = request.read()
+        for status in SUBSCRIBE_MSG:
+            if len(re.findall(status, content)) > 0:
+                return True
+        raise Exception(content)
+
+    def user_subscribe(self, email, password, language='fr', first_name=u'', last_name=u''):
+
+        url = '%s/subscribe/%s' % (self.main_url, self.name)
+
+        password = check_encoding(password, self.encoding)
+        email = check_encoding(email, self.encoding)
+        first_name = check_encoding(first_name, self.encoding)
+        last_name = check_encoding(last_name, self.encoding)
+        name = '%s %s' % (first_name, last_name)
+
+        SUBSCRIBE_DATA['email'] = email
+        SUBSCRIBE_DATA['pw'] = password
+        SUBSCRIBE_DATA['pw-conf'] = password
+        SUBSCRIBE_DATA['fullname'] = name
+        SUBSCRIBE_DATA['language'] = language
+        opener = urllib2.build_opener(MultipartPostHandler(self.encoding, True))
+        request = opener.open(url, SUBSCRIBE_DATA)
+        content = request.read()
+        # no error code to process
+
+    def user_unsubscribe(self, email, language='fr'):
+
+        url = '%s/options/%s/%s' % (self.main_url, self.name, email)
+
+        email = check_encoding(email, self.encoding)
+
+        UNSUBSCRIBE_DATA['email'] = email
+        UNSUBSCRIBE_DATA['language'] = language
+        UNSUBSCRIBE_DATA['login-unsub'] = UNSUBSCRIBE_BUTTON[language]
+        
+        opener = urllib2.build_opener(MultipartPostHandler(self.encoding, True))
+        request = opener.open(url, UNSUBSCRIBE_DATA)
+        content = request.read()
+        # no error code to process
