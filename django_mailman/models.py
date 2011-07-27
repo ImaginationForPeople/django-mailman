@@ -104,7 +104,7 @@ class List(models.Model):
     name = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
-    main_url = models.URLField()
+    main_url = models.URLField(verify_exists=False)
     encoding = models.CharField(max_length=20, choices=LANGUAGES)
 
     class Meta:
@@ -202,6 +202,7 @@ class List(models.Model):
         all_members = []
         content = opener.open(url, data).read()
         (letters, members, chunks) = self.__parse_member_content(content, self.encoding)
+        all_members.extend(members)
         for letter in letters:
             url_letter = u"%s?%s" %(url, letter)
             content = opener.open(url_letter, data).read()
@@ -212,7 +213,12 @@ class List(models.Model):
                 content = opener.open(url_letter_chunk, data).read()
                 (letters, members, chunks) = self.__parse_member_content(content, self.encoding)
                 all_members.extend(members)
-                
+
+        members = {}
+        for m in all_members:
+            email = m[1].replace(u"%40", u"@")
+            members[email] = m[0]
+        all_members = [(email, name) for email, name in members.items()]
         all_members.sort()
         return all_members
 
