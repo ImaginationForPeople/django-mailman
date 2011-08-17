@@ -135,8 +135,8 @@ class List(models.Model):
         else:
             raise Exception('Could not find member-information')
 
-        msg = msg.decode(self.encoding)
-        member = member.decode(self.encoding)
+        msg = msg.encode(self.encoding)
+        member = member.encode(self.encoding)
         return (msg, member)
 
     def __parse_member_content(self, content, encoding='iso-8859-1'):
@@ -177,7 +177,7 @@ class List(models.Model):
 
         (msg, member) = self.__parse_status_content(unicode(content, self.encoding))
         if (msg not in SUBSCRIBE_MSG):
-            error = u'%s: %s' % (msg, member)
+            error = u'%s: %s' % (unicode(msg, encoding=self.encoding), unicode(member, encoding=self.encoding))
             raise Exception(error.encode(self.encoding))
 
     def unsubscribe(self, email):
