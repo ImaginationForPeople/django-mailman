@@ -160,7 +160,7 @@ class List(models.Model):
         return '%s/admindb/%s/?adminpw=%s' % (self.main_url, self.name,
                                               self.password)
 
-    def subscribe(self, email, first_name=u'', last_name=u''):
+    def subscribe(self, email, first_name=u'', last_name=u'', send_welcome_msg=False):
         from email.Utils import formataddr
 
         url = '%s/admin/%s/members/add' % (self.main_url, self.name)
@@ -171,6 +171,7 @@ class List(models.Model):
         name = '%s %s' % (first_name, last_name)
 
         SUBSCRIBE_DATA['adminpw'] = self.password
+        SUBSCRIBE_DATA['send_welcome_msg_to_this_batch'] = send_welcome_msg and "1" or "0"
         SUBSCRIBE_DATA['subscribees_upload'] = formataddr([name.strip(), email])
         opener = urllib2.build_opener(MultipartPostHandler(self.encoding, True))
         content = opener.open(url, SUBSCRIBE_DATA).read()
